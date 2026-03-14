@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sigorta AI Skills</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sidebar-bg: #0f172a;
+    --sidebar-w: 260px;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --success: #22c55e;
+    --radius: 8px;
+  }
+
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: var(--text); }
+
+  .layout { display: flex; height: 100vh; }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo h1 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-logo .badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--accent-hover);
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: monospace;
+  }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; overflow-y: auto; }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 8px 20px 4px;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, color 0.15s;
+    border-radius: 0;
+  }
+
+  .nav-btn:hover { background: var(--surface); color: var(--text); }
+
+  .nav-btn.active {
+    background: rgba(99,102,241,0.15);
+    color: var(--accent-hover);
+    border-right: 2px solid var(--accent);
+  }
+
+  .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Main ─── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .header {
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--sidebar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .content { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; gap: 16px; overflow: hidden; }
+
+  .input-row { display: flex; flex-direction: column; gap: 8px; }
+
+  .input-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  #girdi {
+    width: 100%;
+    min-height: 120px;
+    max-height: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 12px 14px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  #girdi:focus { border-color: var(--accent); }
+  #girdi::placeholder { color: var(--text-muted); }
+
+  .input-hint { font-size: 11px; color: var(--text-muted); }
+
+  .run-row { display: flex; align-items: center; gap: 12px; }
+
+  #calistir-btn {
+    padding: 9px 22px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+
+  #calistir-btn:hover:not(:disabled) { background: var(--accent-hover); }
+  #calistir-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .status-dot.running { background: var(--accent); animation: pulse 1s infinite; }
+  .status-dot.done { background: var(--success); }
+  .status-dot.error { background: #f87171; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  #durum-mesaj { font-size: 12px; color: var(--text-muted); }
+
+  /* Output */
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .output-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  #kopyala-btn {
+    padding: 4px 12px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  #kopyala-btn:hover { color: var(--text); background: var(--surface); }
+
+  #cikti-alan {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+    min-height: 200px;
+  }
+
+  #cikti-alan:empty::before {
+    content: 'Çıktı burada görünecek…';
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Markdown styles inside output */
+  #cikti-alan h1, #cikti-alan h2, #cikti-alan h3 {
+    color: var(--accent-hover);
+    margin: 14px 0 6px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  #cikti-alan h1 { font-size: 18px; }
+  #cikti-alan h2 { font-size: 15px; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 18px; }
+  #cikti-alan h3 { font-size: 14px; }
+  #cikti-alan p { margin: 6px 0; }
+  #cikti-alan ul, #cikti-alan ol { padding-left: 20px; margin: 6px 0; }
+  #cikti-alan li { margin: 3px 0; }
+  #cikti-alan strong { color: #f1f5f9; }
+  #cikti-alan em { color: var(--text-muted); }
+  #cikti-alan code { background: var(--surface2); border-radius: 4px; padding: 1px 5px; font-size: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; color: #7dd3fc; }
+  #cikti-alan pre { background: var(--surface2); border-radius: 6px; padding: 12px 14px; overflow-x: auto; margin: 8px 0; }
+  #cikti-alan pre code { background: none; padding: 0; font-size: 13px; }
+  #cikti-alan blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text-muted); margin: 8px 0; }
+  #cikti-alan hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+  #cikti-alan table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  #cikti-alan th { background: var(--surface2); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  #cikti-alan td { padding: 5px 10px; border-bottom: 1px solid rgba(51,65,85,0.5); }
+
+  .notion-bar {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+
+  .notion-bar a { color: var(--accent-hover); text-decoration: none; }
+  .notion-bar a:hover { text-decoration: underline; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>⚡ Sigorta AI</h1>
+      <span class="badge">claude-sonnet-4-6</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Skills</div>
+
+      <button class="nav-btn active" data-skill="sprint-planlama" data-title="Sprint Planlama" data-sub="Agile sprint planı oluştur" data-placeholder="Sprint hedeflerini, ekip kapasitesini ve backlog maddelerini gir...">
+        <span class="icon">🎯</span> Sprint Planlama
+      </button>
+
+      <button class="nav-btn" data-skill="toplanti-ozetle" data-title="Toplantı Özetleme" data-sub="Toplantı notlarını yapılandır" data-placeholder="Toplantı notlarını veya transkriptini yapıştır...">
+        <span class="icon">📝</span> Toplantı Özetleme
+      </button>
+
+      <button class="nav-btn" data-skill="gorev-parcala" data-title="Görev Parçalama" data-sub="Büyük görevi alt görevlere böl" data-placeholder="Parçalanmasını istediğin görev veya epic'i tanımla...">
+        <span class="icon">🔨</span> Görev Parçalama
+      </button>
+
+      <button class="nav-btn" data-skill="haftalik-rapor" data-title="Haftalık Rapor" data-sub="Haftalık durum raporu oluştur" data-placeholder="Bu haftaki tamamlanan işleri, engelleri ve planları yaz...">
+        <span class="icon">📊</span> Haftalık Rapor
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      Çıktılar Notion'a kaydedilir
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="header">
+      <div>
+        <div class="header-title" id="baslik">Sprint Planlama</div>
+        <div class="header-sub" id="alt-baslik">Agile sprint planı oluştur</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Input -->
+      <div class="input-row">
+        <div class="input-label">Girdi</div>
+        <textarea id="girdi" placeholder="Sprint hedeflerini, ekip kapasitesini ve backlog maddelerini gir..."></textarea>
+        <div class="input-hint">Ctrl+Enter ile çalıştır</div>
+      </div>
+
+      <!-- Run button + status -->
+      <div class="run-row">
+        <button id="calistir-btn">▶ Çalıştır</button>
+        <span class="status-dot" id="status-dot"></span>
+        <span id="durum-mesaj"></span>
+      </div>
+
+      <!-- Output header -->
+      <div class="output-header">
+        <div class="output-label">Çıktı</div>
+        <button id="kopyala-btn">📋 Kopyala</button>
+      </div>
+
+      <!-- Output area -->
+      <div id="cikti-alan"></div>
+
+      <!-- Notion status -->
+      <div class="notion-bar" id="notion-bar"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const state = {
+    skill: 'sprint-planlama',
+    running: false,
+    rawText: '',
+  };
+
+  // ─── Markdown renderer (no deps) ───
+  function renderMarkdown(md) {
+    if (!md) return '';
+    let html = md
+      // Escape HTML first
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // Code blocks
+      .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre><code>${c.trim()}</code></pre>`)
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      // Bold / italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // HR
+      .replace(/^---$/gm, '<hr>')
+      // Blockquote
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      // Unordered list
+      .replace(/^\s*[-*] (.+)$/gm, '<li>$1</li>')
+      // Ordered list
+      .replace(/^\s*\d+\. (.+)$/gm, '<oli>$1</oli>')
+      // Wrap list items
+      .replace(/(<li>.*<\/li>)/gs, m => `<ul>${m}</ul>`)
+      .replace(/(<oli>.*<\/oli>)/gs, m => `<ol>${m.replace(/<\/?oli>/g, m2 => m2 === '<oli>' ? '<li>' : '</li>')}</ol>`)
+      // Paragraphs
+      .split('\n\n')
+      .map(block => {
+        block = block.trim();
+        if (!block) return '';
+        if (/^<(h[1-6]|ul|ol|li|pre|blockquote|hr)/.test(block)) return block;
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+      })
+      .join('\n');
+    return html;
+  }
+
+  // ─── Nav ───
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.running) return;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.skill = btn.dataset.skill;
+      document.getElementById('baslik').textContent = btn.dataset.title;
+      document.getElementById('alt-baslik').textContent = btn.dataset.sub;
+      document.getElementById('girdi').placeholder = btn.dataset.placeholder;
+      clearOutput();
+    });
+  });
+
+  function clearOutput() {
+    state.rawText = '';
+    document.getElementById('cikti-alan').textContent = '';
+    document.getElementById('notion-bar').textContent = '';
+    setStatus('idle');
+  }
+
+  function setStatus(mode, msg) {
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('durum-mesaj');
+    dot.className = 'status-dot ' + (mode === 'idle' ? '' : mode);
+    txt.textContent = msg || '';
+  }
+
+  // ─── Run ───
+  async function calistir() {
+    const girdi = document.getElementById('girdi').value.trim();
+    if (!girdi) { document.getElementById('girdi').focus(); return; }
+    if (state.running) return;
+
+    state.running = true;
+    state.rawText = '';
+    const ciktiAlan = document.getElementById('cikti-alan');
+    ciktiAlan.textContent = '';
+    document.getElementById('notion-bar').textContent = '';
+    document.getElementById('calistir-btn').disabled = true;
+    setStatus('running', 'Yanıt oluşturuluyor…');
+
+    try {
+      const res = await fetch(`/api/run/${state.skill}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ girdi }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || res.statusText);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line);
+            if (msg.t === 'chunk') {
+              state.rawText += msg.v;
+              // Stream as plain text during generation
+              ciktiAlan.textContent = state.rawText;
+              ciktiAlan.scrollTop = ciktiAlan.scrollHeight;
+            } else if (msg.t === 'done') {
+              // Render markdown when complete
+              ciktiAlan.innerHTML = renderMarkdown(state.rawText);
+              ciktiAlan.scrollTop = 0;
+              if (msg.notion_id) {
+                document.getElementById('notion-bar').innerHTML =
+                  `✅ Notion'a kaydedildi &mdash; ID: <code>${msg.notion_id}</code>`;
+              } else {
+                document.getElementById('notion-bar').textContent =
+                  '⚠️ Notion kaydı yapılmadı (ortam değişkeni eksik veya hata)';
+              }
+              setStatus('done', 'Tamamlandı');
+            } else if (msg.t === 'error') {
+              throw new Error(msg.v);
+            }
+          } catch (parseErr) {
+            // ignore non-JSON lines
+          }
+        }
+      }
+    } catch (err) {
+      setStatus('error', 'Hata: ' + err.message);
+      ciktiAlan.textContent = '❌ ' + err.message;
+    } finally {
+      state.running = false;
+      document.getElementById('calistir-btn').disabled = false;
+    }
+  }
+
+  document.getElementById('calistir-btn').addEventListener('click', calistir);
+
+  document.getElementById('girdi').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); calistir(); }
+  });
+
+  // Copy
+  document.getElementById('kopyala-btn').addEventListener('click', () => {
+    if (!state.rawText) return;
+    navigator.clipboard.writeText(state.rawText).then(() => {
+      const btn = document.getElementById('kopyala-btn');
+      btn.textContent = '✅ Kopyalandı';
+      setTimeout(() => { btn.textContent = '📋 Kopyala'; }, 1500);
+    });
+  });
+</script>
+</body>
+</html>
